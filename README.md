@@ -8,6 +8,8 @@ social platform. Two evidence branches, a gate that decides how much to trust
 each, and a training objective that rewards a *consistent* answer rather than
 just a correct one.
 
+![architecture](assets/architecture.png)
+
 ### Where each deliverable lives
 
 | # | Deliverable | Location |
@@ -310,6 +312,8 @@ By kind: genuine photos 11/1200, tampered 4/1200, ProGAN 7/406, LSUN 5/399,
 DALL·E 3 6/322. `results/error_analysis.md` has the full breakdown; the 27
 held-out hard-negative crops score 0 errors.
 
+![robustness](assets/robustness_chart.png)
+
 **Robustness** (2,000-image balanced subsample × 16 transform cells): clean
 AUC **0.999**, no cell below **0.993** — JPEG down to q30, blur to σ=2.0,
 downscale to 0.25×, noise to σ=0.1, ±20% colour jitter, 80% crop. Mean AUC
@@ -481,6 +485,11 @@ app.py                          local web interface (upload -> probability)
 requirements.txt                dependency pins (read the header first)
 configs/default.yaml            committed hyperparameters
 checkpoints/full.pt             the shipped model, 2.2 MB (committed)
+
+assets/
+  thumbnail.png                 3:2 Devpost gallery thumbnail
+  architecture.png              the two-branch diagram above
+  robustness_chart.png          clean vs 16 transform cells, charted
 
 results/
   robustness_table.md           clean vs 16 transform cells (deliverable 4)
