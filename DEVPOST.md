@@ -2,7 +2,7 @@
 
 *Draft for the Devpost submission form. TikTok TechJam 2026 — Problem
 Statement #5: Robust Detection of AI-Generated Images Under Real-World
-Transformations. Solo submission.*
+Transformations.*
 
 ---
 

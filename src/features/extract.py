@@ -1,5 +1,5 @@
 """One-time feature extraction -- the decision that makes this buildable
-solo on 8GB.
+on a single 8GB GPU.
 
 For every image we compute K views (view 0 is always clean, views 1..K-1 are
 randomly sampled degradations) and store, per view:

@@ -1,6 +1,6 @@
 # Robust Detection of AI-Generated Images Under Real-World Transformations
 
-TikTok TechJam 2026 — Problem Statement #5 · **Solo submission**
+TikTok TechJam 2026 — Problem Statement #5 · **Team submission**
 
 A binary real-vs-AI-generated image detector built so its accuracy survives the
 JPEG re-encoding, resizing and blur every image picks up on its way through a
@@ -466,8 +466,8 @@ pairs. `--backbone ViT-L-14` is one flag away and still under the cap.
 
 ## 5. Team Member Contributions
 
-**Solo submission.** All work — data pipeline, model, evaluation harness,
-error analysis, and write-up — by the single participant listed on Devpost.
+**Team submission.** All work — data pipeline, model, evaluation harness,
+error analysis, and write-up — by the team listed on Devpost.
 
 ---
 

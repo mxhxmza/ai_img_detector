@@ -12,7 +12,7 @@ These target the signal families named in the workshop:
 Why fixed features rather than a small trainable CNN
 ----------------------------------------------------
 1. They cache. Like the frozen backbone embeddings, these are computed once
-   per (image, view) and never recomputed, which is what makes solo
+   per (image, view) and never recomputed, which is what keeps
    iteration affordable on an 8GB card.
 2. No JIT. Nothing here compiles a CUDA kernel at runtime, which sidesteps
    the known PTX/JIT problems on sm_120.
