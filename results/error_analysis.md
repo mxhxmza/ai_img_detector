@@ -52,12 +52,42 @@ not obvious localised edits — the AI-edited region is not what triggered them.
   (p=0.11), a plain tulip still life (p=0.08). No compositional "tell", clean
   rendering, and the frequency signature is faint.
 
-**The cost asymmetry.** At threshold 0.5 the model favours catching AI: on the
-held-out set it misses 0.8% of synthetic images and wrongly flags 0.6% of real
-ones. On the harder WildFake transfer benchmark the real-photo false-positive
-rate on polished web imagery rises to ~6% (plain snapshots stay under 1%).
-Calling a real photograph synthetic is an accusation against a person, so the
-intended deployment is a human-review queue, and the threshold should be
-raised wherever a false accusation costs more than a missed synthetic — the
-`@best` column of the WildFake table shows most of the balanced accuracy
-survives that shift.
+**1 — The cost asymmetry.** 
+At threshold 0.5 the model favours catching AI: on the held-out set it misses 0.8% of synthetic images and wrongly flags 0.6% of realones. On the harder WildFake transfer benchmark the real-photo false-positiverate on polished web imagery rises to ~6% (plain snapshots stay under 1%).Calling a real photograph synthetic is an accusation against a person, so theintended deployment is a human-review queue, and the threshold should beraised wherever a false accusation costs more than a missed synthetic — the`@best` column of the WildFake table shows most of the balanced accuracy survives that shift.
+
+**2 — Hyperrealistic real photographs trigger false alarms.**
+Studio-lit product shots, polished travel photography, and photographs *of*
+artwork get flagged as synthetic. The model over-indexes on the ultra-clean,
+low-noise look that high-end AI art shares with professional photography. On
+the WildFake `laion_matched` config the false-alarm rate on genuine photos is
+**6.0%** — it was 1.7% before the DALL·E 3 pass, and plain COCO snapshots stay
+under 1%. Calling a real photograph synthetic is an accusation against a
+person, so this is the limitation that most constrains deployment: the right
+home for this model is a human-review queue, not automated enforcement.
+
+**3 — Heavy noise works as a shield.**
+Intense compression or additive noise buries the high-frequency fingerprint
+the forensic branch depends on, and a degraded synthetic image starts to look
+like a messy real snapshot. σ=0.1 noise is the worst cell in the grid: recall
+at a 1%-false-positive operating point falls **99.7% → 89.6%**, accuracy
+0.990 → 0.964, calibration error 0.008 → 0.026. Cell AUC still holds at 0.993,
+so the *ranking* survives — but roughly one AI image in ten slips past a strict
+threshold once it is noisy enough. An adversary who simply adds grain is not
+being clever, and it partly works.
+
+**4 — GigaGAN slips through.**
+Modern text-to-image GANs are the clearest hole. DALL·E 3 (0.99 AUC, 93%
+recall) and Midjourney v5 (0.97 AUC, 87%) are caught reliably; **GigaGAN sits
+at 0.45 AUC and a 4% detection rate**. We added ProGAN to training and it did
+*not* transfer — a 2018 category GAN and a 2023 text-to-image GAN leave
+different traces. The fix is GigaGAN-class or StyleGAN-3 data in training, not
+a different architecture.
+
+**5 — Localised edits are invisible.**
+A real photograph with a small AI-edited region scores as ~100% real. This is
+partly by design: a tampered photo was still taken by a person, and "is this a
+real photograph?" is the question we chose to answer. But it means partial
+manipulation is out of scope entirely — only whole-image generation is
+detected. Inpainting, face swaps and object removal all pass. A deployment
+that cares about those needs a localisation model beside this one.
+
