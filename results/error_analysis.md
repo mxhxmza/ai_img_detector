@@ -52,7 +52,7 @@ not obvious localised edits — the AI-edited region is not what triggered them.
   (p=0.11), a plain tulip still life (p=0.08). No compositional "tell", clean
   rendering, and the frequency signature is faint.
 
-###Limitations
+## Limitations
 
 **1 — The cost asymmetry.** 
 At threshold 0.5 the model favours catching AI: on the held-out set it misses 0.8% of synthetic images and wrongly flags 0.6% of realones. On the harder WildFake transfer benchmark the real-photo false-positiverate on polished web imagery rises to ~6% (plain snapshots stay under 1%).Calling a real photograph synthetic is an accusation against a person, so theintended deployment is a human-review queue, and the threshold should beraised wherever a false accusation costs more than a missed synthetic — the`@best` column of the WildFake table shows most of the balanced accuracy survives that shift.
