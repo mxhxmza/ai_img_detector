@@ -18,7 +18,7 @@ just a correct one.
 | 2 | Public repo — commented code, all components | this repository |
 | 2 | Graded script: image dir → JSON of `{image_path, pred}` | [`predict.py`](predict.py) |
 | 2 | README: overview / setup / reproduce / limitations / contributions | §1–§5 below |
-| 3 | Demo video (YouTube, linked on Devpost) | *link on the Devpost page* |
+| 3 | Demo video (YouTube, linked on Devpost) | https://youtu.be/VbQZidgxWhk |
 | 4 | Robustness evaluation summary (clean vs transformed) | [`results/robustness_table.md`](results/robustness_table.md) · §3 |
 | 5 | Error analysis note (representative FP / FN, trade-offs) | [`results/error_analysis.md`](results/error_analysis.md) |
 
