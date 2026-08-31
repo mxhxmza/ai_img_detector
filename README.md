@@ -14,7 +14,7 @@ just a correct one.
 
 | # | Deliverable | Location |
 |---|---|---|
-| 1 | Written project description | [`DEVPOST.md`](DEVPOST.md) · plus §1 below |
+| 1 | Written project description | §1 below |
 | 2 | Public repo — commented code, all components | this repository |
 | 2 | Graded script: image dir → JSON of `{image_path, pred}` | [`predict.py`](predict.py) |
 | 2 | README: overview / setup / reproduce / limitations / contributions | §1–§5 below |
