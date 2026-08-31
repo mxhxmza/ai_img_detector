@@ -1,0 +1,24 @@
+# Committed hyperparameters -- every reported number is reproducible from this.
+
+backbone: ViT-B-16        # ViT-L-14 is one flag away and still under the cap
+views: 4                  # K in the feature cache: 1 clean + 3 degraded
+batch_size_extract: 128
+batch_size_train: 256
+
+epochs: 30
+lr: 0.001
+weight_decay: 0.0001
+hidden: 256
+dropout: 0.1
+
+lambda_consistency: 1.0   # clean <-> transformed agreement
+lambda_degradation: 0.1   # degradation-estimation auxiliary loss
+
+test_fraction: 0.12       # scripts/build_dataset.py
+seed: 0
+
+# Ablation ladder -- these four runs are the ablation table.
+#   1. --no-forensic --no-gate --no-consistency   semantic baseline
+#   2. --no-forensic --no-gate                    + augmentation
+#   3. --no-gate                                  + frequency branch
+#   4. (no flags)                                 + degradation gate
