@@ -380,7 +380,20 @@ work as expected. `GET /api/info` reports the loaded checkpoint and `POST
 /api/predict` (multipart field `image`) returns the JSON score, so the server
 doubles as a scoring API.
 
-### Output format
+### The graded script and its output format
+
+The brief asks for:
+
+> *A script that takes an image directory as input and outputs a confidence
+> score for each image, indicating the likelihood that it is AIGC-generated.
+> The output should be a JSON file containing `image_path` and `pred` for each
+> image.*
+
+That is [`predict.py`](predict.py), verbatim:
+
+```bash
+python predict.py --image-dir path/to/images --out predictions.json
+```
 
 ```json
 [
@@ -389,8 +402,16 @@ doubles as a scoring API.
 ]
 ```
 
-`pred` is a calibrated probability in [0,1] that the image is AI-generated.
-`--format dict` and `--binary` cover the alternate readings of the spec.
+`pred` is a **calibrated probability in [0, 1]** that the image is
+AI-generated. The brief says "confidence score ... indicating the likelihood",
+which reads as a probability rather than a hard label, so that is the default;
+`--format dict` and `--binary` cover the alternate readings without a code
+change. Unreadable and non-image files are skipped and reported rather than
+crashing the run — one corrupt file must never take down an evaluation.
+
+Section 5 of the [Colab notebook](notebooks/aigc_detector_colab.ipynb) runs
+this exact command on images you upload and prints the JSON it produces, if
+you would rather see it than install anything.
 
 ### Design decisions that affect the numbers
 
