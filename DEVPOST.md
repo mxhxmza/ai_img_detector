@@ -31,7 +31,7 @@ Detecting AI-generated images after JPEG, resizing and blur have already destroy
 ## Thumbnail image
 
 Upload **`assets/thumbnail.png`** — 1200×800, exactly the 3:2 ratio Devpost
-asks for, 16 KB (well under the 5 MB cap).
+asks for, 69 KB (well under the 5 MB cap).
 
 ---
 
@@ -108,32 +108,67 @@ made it possible to iterate honestly on a single 8 GB laptop GPU.
 
 ## Challenges we ran into
 
+### Four blind spots we could not close
+
+The honest headline: we know exactly where this model fails, because we went
+looking. All four are measured, reproducible, and still open.
+
+**Hyperrealistic real photos trigger false alarms.** Studio-lit product shots,
+polished travel photography and photographs *of* artwork get flagged. The
+model over-indexes on the ultra-clean, low-noise look that high-end AI art
+shares with professional photography — a **6.0% false-alarm rate** on genuine
+photos in the benchmark's hardest real-image config, up from 1.7% before we
+added DALL·E 3 data. Plain snapshots stay under 1%. This is the cost of the
+capability we bought, and it is the limitation that most constrains where the
+model can be deployed.
+
+**Heavy noise works as a shield.** Intense compression or additive noise
+buries the high-frequency fingerprint the forensic branch depends on, and a
+degraded synthetic starts to look like a messy real snapshot. At σ=0.1 noise —
+the worst cell in our grid — recall at a 1%-false-positive operating point
+falls from **99.7% to 89.6%**. Ranking survives (cell AUC 0.993), but roughly
+one AI image in ten slips past a strict threshold once it is grainy enough.
+Adding noise is not a clever attack, and it partly works.
+
+**GigaGAN slips through.** DALL·E 3 (93% recall) and Midjourney v5 (87%) are
+caught reliably. **GigaGAN sits at a 4% detection rate.** We added ProGAN to
+training specifically to fix this and it did *not* transfer — a 2018 category
+GAN and a 2023 text-to-image GAN leave different traces. Architecture was not
+the missing piece; the right training data is.
+
+**Localised edits are invisible.** A real photo with a small AI-edited region
+scores as ~100% real. Partly by design — a tampered photo was still taken by a
+person — but it means inpainting, face swaps and object removal all pass
+unflagged. Only whole-image generation is in scope.
+
+### Three we did close
+
 **The benchmark was gameable, and we nearly missed it.** In the spec-faithful
 config of the reference evaluation set, every real image is exactly 200×200
 and no generated image is. `img.size == (200, 200)` scores **AUC 1.000 with no
 model at all**. Our evaluation script now measures that shortcut alongside our
-own score in every run, so the two can never be confused. We report the
-leak-free `laion_matched` config as our headline instead.
+own score in every run, so the two can never be confused, and we report the
+leak-free config as our headline instead.
 
-**We shipped a shortcut and had to roll it back.** An early attempt to fix GAN
-detection added BigGAN images — all 200×200, while every existing training
-image was ~512 px. The model learned image size, not GAN artifacts: it looked
-better on one benchmark config while *regressing* another by 0.14 AUC and
-pushing real-photo false positives from 0.28% to 6.4%. We reverted it entirely
-and rebuilt the approach with resolution- and aspect-ratio-matched real
-partners for every AI image added.
-
-**Two images we were asked to fix turned out to be off-limits.** Two
-misclassified images handed to us for a targeted fix were byte-identical to
-images in the held-out evaluation set. Training on them would have leaked. We
-left them out — and they became a genuinely unbiased spot check instead.
+**We shipped a shortcut and had to roll it back.** An early attempt at the
+GAN problem added BigGAN images — all 200×200, while every existing training
+image was ~512 px. The model learned image size, not GAN artifacts: better on
+one benchmark config while *regressing* another by 0.14 AUC and pushing
+real-photo false positives from 0.28% to 6.4%. We reverted it entirely and
+rebuilt the approach with resolution- and aspect-ratio-matched real controls
+for every AI image added. The GigaGAN gap above is what remains after doing
+it properly.
 
 **A silent OOM masquerading as a network hang.** Dataset shard reads were
 being OOM-killed with no traceback, which looked exactly like a stalled
 download. The fix was streaming the parquet in batches (peak memory
-2,850 MB → 942 MB). Separately, the feature-extraction worker pool deadlocked
-repeatedly on Windows; switching from processes to threads solved it, since
-the forensic work is SciPy FFT/DCT that releases the GIL anyway.
+2,850 MB → 942 MB). Separately the feature-extraction worker pool deadlocked
+repeatedly on Windows; switching processes to threads solved it, since the
+forensic work is SciPy FFT/DCT that releases the GIL anyway.
+
+Two images we were handed for a targeted fix turned out to be byte-identical
+to held-out evaluation images. Training on them would have leaked, so we left
+them out — and they became a genuinely unbiased spot check instead.
 
 ## Accomplishments that we're proud of
 
@@ -180,19 +215,26 @@ took that trade deliberately, and we say so.
 
 ## What's next
 
-- **Modern GANs.** ProGAN went into training and did *not* transfer to
-  GigaGAN, which sits at 4% recall — a 2018 category GAN and a 2023
-  text-to-image GAN leave different traces. StyleGAN-3 / GigaGAN-class data is
-  the clearest next win.
-- **Recover the false-positive headroom** with hard-negative mining
-  specifically on studio and product photography, which is what the current
-  model over-flags.
+One line per blind spot, in the order we would actually tackle them.
+
+- **Modern GANs** *(blind spot 3)*. ProGAN went into training and did *not*
+  transfer to GigaGAN. StyleGAN-3 / GigaGAN-class data — each image paired
+  with resolution- and aspect-matched real controls, the way our second
+  attempt was built — is the clearest next win.
+- **Recover the false-positive headroom** *(blind spot 1)* with hard-negative
+  mining specifically on studio, product and stock photography. The same
+  targeted pass took false positives from 1.2% to 0.4% earlier in the project.
+- **Train against noise as an attack** *(blind spot 2)*, not just incidental
+  degradation — noise-injected synthetics, and a check on whether the gate
+  learns to distrust the forensic branch harder at high σ.
+- **A localisation head** *(blind spot 4)* beside the whole-image classifier,
+  so inpainting and face swaps stop passing unflagged.
 - **Per-domain calibration** — re-fit temperature on deployment traffic rather
   than shipping one global scalar.
-- **Unfreeze the top transformer blocks** and see whether the semantic branch
-  can be pushed further.
 - **An abstain option.** Extend the gate to emit a reliability estimate so the
   system can decline on images too degraded to judge, instead of guessing.
+- **Unfreeze the top transformer blocks** and see whether the semantic branch
+  can be pushed further.
 
 ---
 

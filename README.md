@@ -425,46 +425,83 @@ pairs. `--backbone ViT-L-14` is one flag away and still under the cap.
 
 ## 4. Limitations and What I'd Improve With More Time
 
-**Known limitations**
+### Four active blind spots
 
-1. **Frozen backbone.** The semantic branch never adapts to the detection
+These are the failure modes we can name, reproduce and measure. Each is a live
+gap in the shipped checkpoint, not a hypothetical.
+
+**1 — Hyperrealistic real photographs trigger false alarms.**
+Studio-lit product shots, polished travel photography, and photographs *of*
+artwork get flagged as synthetic. The model over-indexes on the ultra-clean,
+low-noise look that high-end AI art shares with professional photography. On
+the WildFake `laion_matched` config the false-alarm rate on genuine photos is
+**6.0%** — it was 1.7% before the DALL·E 3 pass, and plain COCO snapshots stay
+under 1%. Calling a real photograph synthetic is an accusation against a
+person, so this is the limitation that most constrains deployment: the right
+home for this model is a human-review queue, not automated enforcement.
+
+**2 — Heavy noise works as a shield.**
+Intense compression or additive noise buries the high-frequency fingerprint
+the forensic branch depends on, and a degraded synthetic image starts to look
+like a messy real snapshot. σ=0.1 noise is the worst cell in the grid: recall
+at a 1%-false-positive operating point falls **99.7% → 89.6%**, accuracy
+0.990 → 0.964, calibration error 0.008 → 0.026. Cell AUC still holds at 0.993,
+so the *ranking* survives — but roughly one AI image in ten slips past a strict
+threshold once it is noisy enough. An adversary who simply adds grain is not
+being clever, and it partly works.
+
+**3 — GigaGAN slips through.**
+Modern text-to-image GANs are the clearest hole. DALL·E 3 (0.99 AUC, 93%
+recall) and Midjourney v5 (0.97 AUC, 87%) are caught reliably; **GigaGAN sits
+at 0.45 AUC and a 4% detection rate**. We added ProGAN to training and it did
+*not* transfer — a 2018 category GAN and a 2023 text-to-image GAN leave
+different traces. The fix is GigaGAN-class or StyleGAN-3 data in training, not
+a different architecture.
+
+**4 — Localised edits are invisible.**
+A real photograph with a small AI-edited region scores as ~100% real. This is
+partly by design: a tampered photo was still taken by a person, and "is this a
+real photograph?" is the question we chose to answer. But it means partial
+manipulation is out of scope entirely — only whole-image generation is
+detected. Inpainting, face swaps and object removal all pass. A deployment
+that cares about those needs a localisation model beside this one.
+
+### Engineering and scope limitations
+
+5. **Frozen backbone.** The semantic branch never adapts to the detection
    task — a deliberate trade for iteration speed on a single 8GB GPU.
    Fine-tuning the top blocks would likely help.
-2. **Finite augmentation views.** Training uses K=4 fixed views per image
+6. **Finite augmentation views.** Training uses K=4 fixed views per image
    rather than fresh random augmentation each epoch, a consequence of caching
    features. Larger K trades disk for diversity.
-3. **Modern text-to-image GANs are the weak spot.** After the external pass,
-   DALL·E 3 (0.99 AUC) and Midjourney (0.97) are well covered, but **GigaGAN
-   sits at 0.45 / 4% recall**. Training now includes ProGAN, which did not
-   transfer — a category GAN and a text-to-image GAN leave different traces.
-   The fix is a modern GAN (StyleGAN-3, GigaGAN-class) in training.
-4. **DALL·E coverage cost real-photo false positives.** The external DALL·E 3
-   images pushed the false-positive rate on LAION-style real photos to ~6% on
-   the WildFake `laion_matched` config (it was 1.7%, and COCO reals stay under
-   1%). The model leans on the DALL·E aesthetic, which polished web photos
-   share. In-distribution accuracy also slipped 0.9964 → 0.9929. Raising the
-   threshold recovers most of the balanced accuracy; a deployment that must
-   not accuse real photographers should do that or re-fit temperature.
-5. **Confidence does not survive a distribution shift.** Temperature is fitted
-   on the training corpus; ECE rises on WildFake and the 0.5 threshold is not
-   the right operating point there. The ranking (AUC) transfers; re-fit
-   temperature on deployment traffic.
-6. **Incidental degradation, not adversarial.** The six transforms model a
+7. **Confidence does not survive a distribution shift.** Expected calibration
+   error is 0.008 on clean held-out images and ≤0.026 across every transform
+   cell, but reaches **0.301** on the `cross_generator` config — the one
+   dominated by the generator family we barely detect. Calibration is not a
+   separate problem from coverage; it is a symptom of it, and a useful early
+   warning that the model is out of its depth. Re-fit temperature on
+   deployment traffic.
+8. **Incidental degradation, not adversarial.** The six transforms model a
    redistribution pipeline, not an adversary deliberately evading detection.
-7. **Tampered images are called real.** A photo with a small AI-edited region
-   is treated as authentic. That is the right product call for "is this
-   photo real", but it means localised manipulation is not surfaced.
-8. **False positives are accusations.** Calling a real photograph synthetic
-   has a human cost. At this accuracy the appropriate deployment is a
-   human-review queue, not automated enforcement.
+   Blind spot 2 above is the closest we come, and it was not designed as an
+   attack.
 
-**With more time**
+**With more time** — in the order we would actually do them
 
+- **Close blind spot 3:** add GigaGAN-class and StyleGAN-3 images to training,
+  each paired with resolution- and aspect-matched real controls, and re-run
+  the full before/after.
+- **Close blind spot 1:** hard-negative mining specifically on studio, product
+  and stock photography — the same targeted pass that took false positives
+  from 1.2% to 0.4% earlier in the project.
+- **Attack blind spot 2 directly:** train against noise-injected synthetics
+  rather than only incidental degradation, and measure whether the gate learns
+  to distrust the forensic branch harder at high σ.
+- **Per-domain calibration** instead of one global temperature scalar.
+- **An abstain option:** extend the gate to emit a reliability estimate so the
+  system can decline on images too degraded to judge, rather than guessing.
 - Unfreeze the last transformer blocks and compare.
 - Add a provenance signal (C2PA) as a third branch where present.
-- Test against generators released after the training data was collected.
-- Extend the gate to predict a *reliability* estimate, so the system can
-  abstain on images too degraded to judge.
 
 ---
 
