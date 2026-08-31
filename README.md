@@ -8,7 +8,7 @@ social platform. Two evidence branches, a gate that decides how much to trust
 each, and a training objective that rewards a *consistent* answer rather than
 just a correct one.
 
-![architecture](assets/architecture.png)
+![architecture](assets/tiktokarchitecture.png)
 
 ### Where each deliverable lives
 
