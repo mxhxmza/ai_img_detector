@@ -26,6 +26,12 @@ The graded script in one line:
 python predict.py --image-dir path/to/images --out predictions.json
 ```
 
+**Try it without installing anything:**
+[open the Colab notebook](https://colab.research.google.com/github/mxhxmza/ai_img_detector/blob/main/notebooks/aigc_detector_colab.ipynb)
+— `Runtime → Run all`, upload images in section 4. Name them `real_*` / `ai_*`
+and it prints accuracy, precision, recall, F1, ROC-AUC and a confusion matrix
+for the batch.
+
 ---
 
 ## 1. Project Overview
@@ -484,7 +490,7 @@ results/
   fp_grid.png / fn_grid.png      the error images the note refers to
   *_raw.json / *_scores.npz      raw numbers behind each table
 
-notebooks/aigc_detector_colab.ipynb   clone + run the checkpoint on a CPU runtime
+notebooks/aigc_detector_colab.ipynb   Colab: clone, run on CPU, score + evaluate uploads
 
 scripts/verify_env.py           sm_120 / CUDA check -- run first
 scripts/fetch_sid_set.py        stream a balanced SID_Set subset to disk
