@@ -528,7 +528,7 @@ that cares about those needs a localisation model beside this one.
 ## 5. Team Member Contributions
 
 **Team submission.** All work — data pipeline, model, evaluation harness,
-error analysis, and write-up — by the team listed on Devpost.
+error analysis, and write-up.
 
 ---
 
