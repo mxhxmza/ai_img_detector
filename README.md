@@ -1,6 +1,5 @@
 # Robust Detection of AI-Generated Images Under Real-World Transformations
 
-TikTok TechJam 2026 — Problem Statement #5 · **Team submission**
 
 A binary real-vs-AI-generated image detector built so its accuracy survives the
 JPEG re-encoding, resizing and blur every image picks up on its way through a
